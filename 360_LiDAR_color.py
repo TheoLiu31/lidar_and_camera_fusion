@@ -44,9 +44,7 @@ class Camera:
                 r = img[int(rs[1])][int(rs[0])][2]
                 g = img[int(rs[1])][int(rs[0])][1]
                 b = img[int(rs[1])][int(rs[0])][0]
-                #ls = "{} {} {} {} {} {}\n".format(pp[2],-pp[0],-pp[1],r,g,b)
                 color_point.append([pt[2],-pt[0],-pt[1],r,g,b])
-                #ls = "{} {} {} {} {} {} {} {} {} \n".format(pp[0],pp[1],pp[2],r,g,b, rs[0], rs[1], 0.0)
         return color_point
     def _rotate_pos(self,deg):
         rad = np.radians(deg)
