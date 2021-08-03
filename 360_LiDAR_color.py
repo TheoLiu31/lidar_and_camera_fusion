@@ -3,6 +3,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 import os
 import sys
+import open3d as o3d
 
 class Camera:
     def __init__(self,cmtx,rmtx,pos):
@@ -15,7 +16,7 @@ class Camera:
     def setup(self):
         print("set CameraParam\n {}".format(self.cmtx))
         print("set Position {}".format(self.pos))
-
+        print(self.rmtx)
     def create_depth_img(self,img,point):
         h, w, _ = img.shape
         color_point =[]
@@ -33,7 +34,8 @@ class Camera:
             pn = np.array(pt[:3])
             pn = np.dot(prmtx, pn.T)
             pn = np.dot(self.rmtx, pn.T)
-            
+            pn += self.tmtx
+
             pp = np.copy(pn)
             if(pn[2] < 0.0):
                 continue
@@ -41,9 +43,9 @@ class Camera:
             rs = np.dot(self.cmtx, pn.T)
 
             if 0 < rs[0] < w and 0 < rs[1] < h :
-                r = img[int(rs[1])][int(rs[0])][2]
-                g = img[int(rs[1])][int(rs[0])][1]
-                b = img[int(rs[1])][int(rs[0])][0]
+                r = img[int(rs[1])][int(rs[0])][2]/255
+                g = img[int(rs[1])][int(rs[0])][1]/255
+                b = img[int(rs[1])][int(rs[0])][0]/255
                 color_point.append([pt[2],-pt[0],-pt[1],r,g,b])
         return color_point
     def _rotate_pos(self,deg):
@@ -72,13 +74,25 @@ def read_csv(filepath):
     return np.array(lidar)
 
 if __name__=="__main__":
-    print("test")
-    point  = read_csv(sys.argv[1])
+
+    #point  = read_csv(sys.argv[1])
+    point = o3d.io.read_point_cloud(sys.argv[1])
+    point = np.array(point.points)
     print(point.shape)
 
-    front_cmtx = np.load("params/front_cmtx.npy")
-    front_rmtx = np.load("params/front_rmtx.npy")
-    front_img = cv2.imread(sys.argv[2])
+    front_cmtx = np.load(sys.argv[2])
+    front_rmtx = np.load(sys.argv[3])
+    front_img = cv2.imread(sys.argv[4])
+    #poler_img = cv2.imread(sys.argv[5],0)
     front_camera = Camera(front_cmtx,front_rmtx,"front")
+    
     front_color_point = front_camera.create_depth_img(front_img,point)
-    np.savetxt("front.csv",front_color_point)
+    np.savetxt("polar_front.csv",front_color_point,fmt='%.5f')
+    """
+    back_cmtx = np.load("params/back_cmtx_01.npy")
+    back_rmtx = np.load("params/back_rmtx_01.npy")
+    back_img = cv2.imread(sys.argv[3])
+    back_camera = Camera(back_cmtx,back_rmtx,"back")
+    back_color_point = back_camera.create_depth_img(back_img,point)
+    np.savetxt("back.csv",back_color_point)
+    """
