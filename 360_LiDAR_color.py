@@ -6,10 +6,9 @@ import sys
 import open3d as o3d
 
 class Camera:
-    def __init__(self,cmtx,rmtx,pos):
+    def __init__(self,cmtx,rtmtx,pos):
         self.cmtx = cmtx
-        self.rmtx = rmtx[0:3,0:3]
-        self.tmtx = rmtx[0:3,3]
+        self.rtmtx = rtmtx
         self.pos = pos
         self.setup()
     
@@ -31,14 +30,10 @@ class Camera:
             prmtx = self._rotate_pos(180)
         
         for pt in point:
-            pn = np.array(pt[:3])
-            pn = np.dot(prmtx, pn.T)
-            pn = np.dot(self.rmtx, pn.T)
-            pn += self.tmtx
+            pn = np.dot(prmtx, pn[:3].T)
+            pn = np.hstack((pn,1.0))
+            pn = np.dot(self.rtmtx, pn.T)
 
-            pp = np.copy(pn)
-            if(pn[2] < 0.0):
-                continue
             pn /=pn[2]
             rs = np.dot(self.cmtx, pn.T)
 
@@ -47,7 +42,9 @@ class Camera:
                 g = img[int(rs[1])][int(rs[0])][1]/255
                 b = img[int(rs[1])][int(rs[0])][0]/255
                 color_point.append([pt[2],-pt[0],-pt[1],r,g,b])
+        
         return color_point
+    
     def _rotate_pos(self,deg):
         rad = np.radians(deg)
         rvec = np.array([0.0, rad, 0.0])
@@ -87,7 +84,7 @@ if __name__=="__main__":
     front_camera = Camera(front_cmtx,front_rmtx,"front")
     
     front_color_point = front_camera.create_depth_img(front_img,point)
-    np.savetxt("polar_front.csv",front_color_point,fmt='%.5f')
+    np.savetxt("point_front.csv",front_color_point,fmt='%.5f')
     """
     back_cmtx = np.load("params/back_cmtx_01.npy")
     back_rmtx = np.load("params/back_rmtx_01.npy")
